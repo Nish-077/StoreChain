@@ -1,0 +1,22 @@
+version: "3"
+services:
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    container_name: ipfs_node
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - ./ipfs_staging:/export
+      - ./ipfs_data:/data/ipfs
+    restart: unless-stopped
+
+  pinning-service:
+    build: ./ipfs-pinning-service
+    container_name: ipfs_pinning_service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ipfs
+    restart: unless-stopped
