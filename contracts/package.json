@@ -1,0 +1,40 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "Solidity smart contracts for StorChain — manages file storage registry and access control on Ethereum.",
+  "keywords": [
+    "blockchain",
+    "smart-contracts",
+    "solidity",
+    "ethereum",
+    "hardhat",
+    "ipfs",
+    "decentralized-storage",
+    "dapp"
+  ],
+  "homepage": "https://github.com/Nish-077/StoreChain#readme",
+  "bugs": {
+    "url": "https://github.com/Nish-077/StoreChain/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nish-077/StoreChain.git"
+  },
+  "license": "ISC",
+  "author": "Nishant Banakar <banakarnishant@gmail.com> (https://github.com/Nish-077)",
+  "type": "commonjs",
+  "main": "hardhat.config.js",
+  "scripts": {
+    "test": "npx hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "chai": "^4.3.10",
+    "dotenv": "^16.5.0",
+    "ethers": "^6.13.5",
+    "hardhat": "^2.23.0"
+  }
+}
