@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  ipfs0:
+    image: ipfs/go-ipfs:latest
+    container_name: ipfs0
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - ./ipfs0_data:/data/ipfs
+
+  cluster0:
+    image: ipfs/ipfs-cluster:latest
+    container_name: cluster0
+    environment:
+      CLUSTER_PEERNAME: cluster0
+      CLUSTER_SECRET: "9ce747761cd02796b60001a277452b9aedbbe20b6301ab8c0bcac0f1da0b276a"
+      CLUSTER_IPFS_CONNECT: "/dns4/ipfs0/tcp/5001"
+    depends_on:
+      - ipfs0
+    ports:
+      - "9094:9094" # Cluster API
+      - "9096:9096" # Cluster swarm
+
+  ipfs1:
+    image: ipfs/go-ipfs:latest
+    container_name: ipfs1
+    ports:
+      - "4002:4001"
+      - "5002:5001"
+      - "8081:8080"
+    volumes:
+      - ./ipfs1_data:/data/ipfs
+
+  cluster1:
+    image: ipfs/ipfs-cluster:latest
+    container_name: cluster1
+    environment:
+      CLUSTER_PEERNAME: cluster1
+      CLUSTER_SECRET: "9ce747761cd02796b60001a277452b9aedbbe20b6301ab8c0bcac0f1da0b276a"
+      CLUSTER_IPFS_CONNECT: "/dns4/ipfs1/tcp/5001"
+      # You will need to update CLUSTER_PEER_ADDRESSES with cluster0's peer multiaddress after first run
+    depends_on:
+      - ipfs1
+      - cluster0
+    ports:
+      - "9095:9094"
+      - "9097:9096"
+
+  ipfs2:
+    image: ipfs/go-ipfs:latest
+    container_name: ipfs2
+    ports:
+      - "4003:4001"
+      - "5003:5001"
+      - "8082:8080"
+    volumes:
+      - ./ipfs2_data:/data/ipfs
+
+  cluster2:
+    image: ipfs/ipfs-cluster:latest
+    container_name: cluster2
+    environment:
+      CLUSTER_PEERNAME: cluster2
+      CLUSTER_SECRET: "9ce747761cd02796b60001a277452b9aedbbe20b6301ab8c0bcac0f1da0b276a"
+      CLUSTER_IPFS_CONNECT: "/dns4/ipfs2/tcp/5001"
+      # You will need to update CLUSTER_PEER_ADDRESSES with cluster0's peer multiaddress after first run
+    depends_on:
+      - ipfs2
+      - cluster0
+    ports:
+      - "9098:9094"
+      - "9099:9096"
