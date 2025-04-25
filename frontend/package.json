@@ -13,8 +13,8 @@
     "@web3-storage/w3up-client": "^17.2.0",
     "electron": "^35.2.0",
     "ethers": "^5.8.0",
-    "ipfs-http-client": "^60.0.1",
     "next": "15.3.1",
+    "pinata": "^2.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-toastify": "^11.0.5"
@@ -22,7 +22,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/cacheable-request": "^6.0.3",
+    "@types/http-cache-semantics": "^4.0.4",
+    "@types/node": "^20.17.30",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
