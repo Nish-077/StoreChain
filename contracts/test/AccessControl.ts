@@ -7,6 +7,10 @@ describe("AccessControl", function () {
   let accessControl: AccessControl;
   let owner: any, user1: any, user2: any, user3: any;
 
+  // Dummy encrypted key for testing
+  const dummyEncryptedKey = ethers.hexlify(ethers.randomBytes(32));
+  const dummyEncryptedKey2 = ethers.hexlify(ethers.randomBytes(32));
+
   beforeEach(async () => {
     [owner, user1, user2, user3] = await ethers.getSigners();
     // Deploy StorageRegistry
@@ -42,6 +46,115 @@ describe("AccessControl", function () {
     ).to.equal(true);
   });
 
+  it("should grant access with encrypted key and allow accessor to get it", async () => {
+    await expect(
+      accessControl.connect(user1).grantAccessWithKey(
+        "QmCID1",
+        user2.address,
+        dummyEncryptedKey
+      )
+    )
+      .to.emit(accessControl, "AccessGranted")
+      .withArgs(user1.address, "QmCID1", user2.address);
+
+    // Accessor can get their encrypted key
+    const key = await accessControl.connect(user2).getEncryptedKey(
+      user1.address,
+      "QmCID1"
+    );
+    expect(key).to.equal(dummyEncryptedKey);
+
+    // Owner can also get the encrypted key for accessor (should be empty)
+    const ownerKey = await accessControl.connect(user1).getEncryptedKey(
+      user1.address,
+      "QmCID1"
+    );
+    expect(ownerKey).to.equal("0x");
+  });
+
+  it("should allow owner to set or update encrypted key for accessor", async () => {
+    await accessControl.connect(user1).grantAccessWithKey(
+      "QmCID1",
+      user2.address,
+      dummyEncryptedKey
+    );
+    // Update encrypted key
+    await expect(
+      accessControl.connect(user1).setEncryptedKey(
+        "QmCID1",
+        user2.address,
+        dummyEncryptedKey2
+      )
+    )
+      .to.emit(accessControl, "EncryptedKeySet")
+      .withArgs(user1.address, "QmCID1", user2.address);
+
+    const key = await accessControl.connect(user2).getEncryptedKey(
+      user1.address,
+      "QmCID1"
+    );
+    expect(key).to.equal(dummyEncryptedKey2);
+  });
+
+  it("should not allow non-owner to set encrypted key", async () => {
+    await accessControl.connect(user1).grantAccessWithKey(
+      "QmCID1",
+      user2.address,
+      dummyEncryptedKey
+    );
+    await expect(
+      accessControl.connect(user2).setEncryptedKey(
+        "QmCID1",
+        user2.address,
+        dummyEncryptedKey2
+      )
+    ).to.be.revertedWith("No access granted");
+  });
+
+  it("should not allow setting empty encrypted key", async () => {
+    await accessControl.connect(user1).grantAccess("QmCID1", user2.address);
+    await expect(
+      accessControl.connect(user1).setEncryptedKey(
+        "QmCID1",
+        user2.address,
+        "0x"
+      )
+    ).to.be.revertedWith("Encrypted key required");
+  });
+
+  it("should revoke access and remove encrypted key", async () => {
+    await accessControl.connect(user1).grantAccessWithKey(
+      "QmCID1",
+      user2.address,
+      dummyEncryptedKey
+    );
+    await expect(
+      accessControl.connect(user1).revokeAccess("QmCID1", user2.address)
+    )
+      .to.emit(accessControl, "AccessRevoked")
+      .withArgs(user1.address, "QmCID1", user2.address);
+
+    expect(
+      await accessControl.hasAccess(user1.address, "QmCID1", user2.address)
+    ).to.equal(false);
+
+    // Accessor cannot get encrypted key anymore
+    await expect(
+      accessControl.connect(user2).getEncryptedKey(user1.address, "QmCID1")
+    ).to.be.revertedWith("Not authorized");
+  });
+
+  it("should not allow getting encrypted key if not authorized", async () => {
+    await accessControl.connect(user1).grantAccessWithKey(
+      "QmCID1",
+      user2.address,
+      dummyEncryptedKey
+    );
+    await expect(
+      accessControl.connect(user3).getEncryptedKey(user1.address, "QmCID1")
+    ).to.be.revertedWith("Not authorized");
+  });
+
   it("should not grant access if CID does not exist", async () => {
     await expect(
       accessControl.connect(user1).grantAccess("QmFake", user2.address)
@@ -53,25 +166,6 @@ describe("AccessControl", function () {
     await expect(
       accessControl.connect(user1).grantAccess("QmCID1", user2.address)
     ).to.be.revertedWith("Accessor already in list");
-  });
-
-  it("should revoke access to a file CID", async () => {
-    await accessControl.connect(user1).grantAccess("QmCID1", user2.address);
-    await expect(
-      accessControl.connect(user1).revokeAccess("QmCID1", user2.address)
-    )
-      .to.emit(accessControl, "AccessRevoked")
-      .withArgs(user1.address, "QmCID1", user2.address);
-
-    expect(
-      await accessControl.hasAccess(user1.address, "QmCID1", user2.address)
-    ).to.equal(false);
-  });
-
-  it("should revert when revoking access that was not granted", async () => {
-    await expect(
-      accessControl.connect(user1).revokeAccess("QmCID1", user2.address)
-    ).to.be.revertedWith("Not granted");
   });
 
   it("should return all accessors for a file", async () => {
