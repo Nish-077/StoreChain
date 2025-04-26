@@ -11,7 +11,7 @@ export async function GET() {
     });
     return NextResponse.json({ url: url }, { status: 200 }); // Returns the signed upload URL
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return NextResponse.json(
       { text: "Error creating API Key:" },
       { status: 500 }
