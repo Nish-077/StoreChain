@@ -1,7 +1,7 @@
 "use client";
 
 import { pinata } from "@/utils/config";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   getAccessControlContract,
   getStorageRegistryContract,
@@ -10,6 +10,8 @@ import {
 import * as ethUtil from "@metamask/eth-sig-util";
 import { Buffer } from "buffer";
 import { getOwnerAddress } from "@/utils/ethereum";
+import { useDropzone } from "react-dropzone";
+import { useWallet } from "@/context/WalletContext";
 
 interface FileUploadProps {
   onSuccess?: (msg: string) => void;
@@ -19,7 +21,19 @@ interface FileUploadProps {
 export default function FileUpload({ onSuccess, onError }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { isWalletConnected } = useWallet();
+
+  // Drag & Drop: Accept only a single file
+  const onDrop = (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setFile(acceptedFiles[0]);
+    }
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: false,
+    maxFiles: 1,
+  });
 
   // Helper: Generate random key and IV
   const generateKeyAndIV = () => {
@@ -142,12 +156,11 @@ export default function FileUpload({ onSuccess, onError }: FileUploadProps) {
 
       // Deselect the file after successful upload
       setFile(null);
-      if (inputRef.current) inputRef.current.value = "";
     } catch (e) {
       // Cleanup if uploadCid and/or storageRegistered are set
       if (uploadCid) {
         try {
-          await fetch(`/api/delete-file?id=${uploadId}`); // <-- changed cid to id
+          await fetch(`/api/delete-file?id=${uploadId}`);
         } catch (err) {
           console.error("Cleanup: Failed to delete from IPFS", err);
         }
@@ -173,39 +186,59 @@ export default function FileUpload({ onSuccess, onError }: FileUploadProps) {
       <h2 className="text-2xl font-bold text-purple-800 mb-6 text-center">
         Upload File
       </h2>
-      <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-        <div className="relative w-full group flex items-center">
-          <input
-            ref={inputRef}
-            type="file"
-            onChange={(e) => {
-              setFile(e.target.files?.[0] || null);
-            }}
-            className="block w-full text-sm text-purple-700 file:mr-4 file:py-3 file:px-6 
-      file:rounded-full file:border-0 file:text-sm file:font-semibold 
-      file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 
-      transition-all duration-300 file:shadow-md file:cursor-pointer
-      group-hover:file:translate-x-1"
-            disabled={isUploading}
-          />
-          {file && (
-            <button
-              type="button"
-              onClick={() => {
-                setFile(null);
-                if (inputRef.current) inputRef.current.value = "";
-              }}
-              className="ml-2 text-purple-600 hover:text-red-600 text-xl font-bold focus:outline-none"
-              title="Remove selected file"
-              disabled={isUploading}
-            >
-              ×
-            </button>
+      {/* Drag & Drop Area */}
+      <div
+        {...getRootProps()}
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-300 mb-4 ${
+          isDragActive
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 bg-gray-100"
+        }`}
+      >
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-12 w-12 text-gray-400 mb-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 16l4-4m0 0l4 4m-4-4v12m13-4h-3m-4 0h-3m-4 0H3m13-4h3m4 0h3"
+            />
+          </svg>
+          {isDragActive ? (
+            <p className="text-blue-600 font-medium">Drop the file here...</p>
+          ) : (
+            <p className="text-gray-600 font-medium">
+              Drag & drop a file here, or click to select
+            </p>
           )}
         </div>
+      </div>
+      {/* Show selected file */}
+      {file && (
+        <div className="mt-4 flex items-center justify-between p-2 bg-blue-100 rounded-lg border border-blue-300">
+          <p className="text-sm text-blue-800 font-medium">{file.name}</p>
+          <button
+            onClick={() => setFile(null)}
+            className="text-red-500 hover:text-red-700 text-lg font-bold focus:outline-none"
+            aria-label="Remove file"
+            disabled={isUploading}
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {/* Centered Upload Button */}
+      <div className="mt-6 flex justify-center">
         <button
           onClick={handleFileUpload}
-          disabled={isUploading || !file}
+          disabled={isUploading || !file || !isWalletConnected}
           className={`px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 
                   text-white font-bold rounded-full shadow-lg transition-all duration-300 
                   transform hover:scale-105 focus:outline-none focus:ring-2 
@@ -217,7 +250,11 @@ export default function FileUpload({ onSuccess, onError }: FileUploadProps) {
                       : "hover:from-purple-700 hover:to-blue-700"
                   }`}
         >
-          {isUploading ? "Uploading..." : "Upload to IPFS"}
+          {isWalletConnected
+            ? isUploading
+              ? "Uploading..."
+              : "Upload to IPFS"
+            : "Connect MetaMask to Upload"}
         </button>
       </div>
     </section>
