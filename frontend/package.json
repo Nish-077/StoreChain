@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@metamask/providers": "^22.0.1",
     "@tailwindcss/postcss": "^4",
     "@types/cacheable-request": "^6.0.3",
     "@types/http-cache-semantics": "^4.0.4",

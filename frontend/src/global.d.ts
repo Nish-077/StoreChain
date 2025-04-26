@@ -1,4 +1,5 @@
-// filepath: c:\Users\manis\OneDrive\Documents\bbc\StoreChain\frontend\src\global.d.ts
+import type { Ethereum } from "@metamask/providers";
+
 interface Window {
-    ethereum?: any; // MetaMask injects the `ethereum` object
-  }
+  ethereum?: Ethereum; // MetaMask injects the `ethereum` object
+}
