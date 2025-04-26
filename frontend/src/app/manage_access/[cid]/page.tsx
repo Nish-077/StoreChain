@@ -12,11 +12,41 @@ export default function ManageAccessPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filename, setFilename] = useState<string | null>(null);
+  const [isWalletConnected, setIsWalletConnected] = useState<boolean | null>(
+    null
+  );
+
+  // Check MetaMask connection and redirect if not connected
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (typeof window !== "undefined" && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({
+            method: "eth_accounts",
+          });
+          if (accounts && accounts.length > 0) {
+            setIsWalletConnected(true);
+          } else {
+            setIsWalletConnected(false);
+            router.push("/");
+          }
+        } catch {
+          setIsWalletConnected(false);
+          router.push("/");
+        }
+      } else {
+        setIsWalletConnected(false);
+        router.push("/");
+      }
+    };
+    checkConnection();
+  }, [router]);
 
   useEffect(() => {
+    if (!cid) return;
     const fetchFilename = async () => {
       try {
-        const res = await fetch(`/api/owned-pinata-files?cid=${cid}`);
+        const res = await fetch(`/api/owned-files?cid=${cid}`);
         if (res.ok) {
           const data = await res.json();
           if (data?.files?.length > 0) {
@@ -29,6 +59,18 @@ export default function ManageAccessPage() {
     };
     fetchFilename();
   }, [cid]);
+
+  if (isWalletConnected === null) {
+    // Still checking connection
+    return (
+      <div className="text-center py-12">Checking wallet connection...</div>
+    );
+  }
+
+  if (!isWalletConnected) {
+    // Redirecting, or fallback
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">

@@ -2,6 +2,7 @@
 
 import "./globals.css";
 import React from "react";
+import { WalletProvider } from "@/context/WalletContext";
 
 export default function RootLayout({
   children,
@@ -18,7 +19,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-gray-100 flex flex-col items-center">
-        <main className="w-full max-w-4xl p-6">{children}</main>
+        <main className="w-full max-w-4xl p-6">
+          <WalletProvider>{children}</WalletProvider>
+        </main>
       </body>
     </html>
   );

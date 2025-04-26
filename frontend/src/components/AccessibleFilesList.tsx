@@ -5,6 +5,7 @@ import { getAccessControlContract } from "@/utils/contracts";
 import { ethers } from "ethers";
 import { pinata } from "@/utils/config";
 import { getOwnerAddress } from "@/utils/ethereum";
+import { useWallet } from "@/context/WalletContext";
 
 interface AccessibleFile {
   owner: string;
@@ -24,8 +25,14 @@ export default function AccessibleFilesList({
   const [files, setFiles] = useState<AccessibleFile[]>([]);
   const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const { isWalletConnected } = useWallet();
 
   useEffect(() => {
+    if (!isWalletConnected) {
+      setFiles([]);
+      setLoading(false);
+      return;
+    }
     const fetchFiles = async () => {
       setLoading(true);
       try {
@@ -33,7 +40,6 @@ export default function AccessibleFilesList({
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
         const userAddress = await signer.getAddress();
-
         const accessControl = getAccessControlContract();
         const filesList: AccessibleFile[] =
           await accessControl.getAccessibleFiles(userAddress);
@@ -67,7 +73,7 @@ export default function AccessibleFilesList({
     };
     fetchFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isWalletConnected]);
 
   useEffect(() => {
     const fetchUrls = async () => {
@@ -158,6 +164,19 @@ export default function AccessibleFilesList({
       console.error("handleDownload: Error", e);
     }
   };
+
+  if (!isWalletConnected) {
+    return (
+      <section className="mt-10 p-6 bg-gradient-to-r from-blue-50/90 to-purple-50/90 rounded-xl border border-blue-200/50">
+        <h2 className="text-2xl font-bold text-blue-800 mb-6 text-center">
+          Files Shared With You
+        </h2>
+        <div className="text-center py-12 text-blue-600 text-lg font-semibold">
+          Connect to MetaMask to view your files.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-10 p-6 bg-gradient-to-r from-blue-50/90 to-purple-50/90 rounded-xl border border-blue-200/50">

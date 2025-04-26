@@ -13,6 +13,7 @@ import {
 import { pinata } from "@/utils/config";
 import { useRouter } from "next/navigation";
 import { getOwnerAddress } from "@/utils/ethereum";
+import { useWallet } from "@/context/WalletContext";
 
 interface PinataFile {
   id: string;
@@ -34,6 +35,7 @@ const UploadedFilesList = forwardRef(function UploadedFilesList(
   const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { isWalletConnected } = useWallet();
 
   const fetchFiles = React.useCallback(async () => {
     setLoading(true);
@@ -207,6 +209,19 @@ const UploadedFilesList = forwardRef(function UploadedFilesList(
     }
     setLoading(false);
   };
+
+  if (!isWalletConnected) {
+    return (
+      <section className="p-6 bg-gradient-to-r from-pink-50/90 to-rose-50/90 rounded-xl border border-pink-200/50">
+        <h2 className="text-2xl font-bold text-rose-800 mb-6 text-center">
+          Your Files
+        </h2>
+        <div className="text-center py-12 text-pink-600 text-lg font-semibold">
+          Connect to MetaMask to view your files.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="p-6 bg-gradient-to-r from-pink-50/90 to-rose-50/90 rounded-xl border border-pink-200/50">
