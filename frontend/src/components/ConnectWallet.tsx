@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { connectMetaMask, getConnectedAccount } from "@/utils/metamask";
+import { getEncryptionKeyRegistryContract } from "@/utils/contracts";
 
 interface ConnectWalletProps {
   onSuccess?: (msg: string) => void;
@@ -14,11 +15,43 @@ export default function ConnectWallet({
 }: ConnectWalletProps) {
   const [account, setAccount] = useState<string | null>(null);
 
+  const registerEncryptionKey = async (address: string) => {
+    try {
+      const registry = getEncryptionKeyRegistryContract();
+      // Check if already registered
+      const existingKey = await registry.getPublicEncryptionKey(address);
+      if (existingKey && existingKey !== "") {
+        return;
+      }
+
+      // Get the public encryption key from MetaMask
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const publicKey = await window.ethereum.request({
+        method: "eth_getEncryptionPublicKey",
+        params: [accounts[0]],
+      });
+      // Register it in the EncryptionKeyRegistry contract
+      await registry.setPublicEncryptionKey(publicKey);
+    } catch (err) {
+      // User may reject the MetaMask prompt, or already registered
+      if (onError)
+        onError(
+          err instanceof Error
+            ? err.message
+            : "Failed to register public encryption key."
+        );
+    }
+  };
+
   const connectWallet = async () => {
     try {
       const acc = await connectMetaMask();
       setAccount(acc);
-      if (onSuccess) onSuccess("Wallet connected successfully!");
+      await registerEncryptionKey(acc);
+      if (onSuccess)
+        onSuccess("Wallet connected and encryption key registered!");
     } catch (error) {
       if (onError)
         onError(
@@ -37,7 +70,9 @@ export default function ConnectWallet({
         if (onError) onError("Wallet disconnected.");
       } else {
         setAccount(accounts[0]);
-        if (onSuccess) onSuccess("Wallet account changed.");
+        registerEncryptionKey(accounts[0]);
+        if (onSuccess)
+          onSuccess("Wallet account changed and encryption key registered.");
       }
     };
 
@@ -60,7 +95,10 @@ export default function ConnectWallet({
     const checkWalletConnection = async () => {
       try {
         const acc = await getConnectedAccount();
-        if (acc) setAccount(acc);
+        if (acc) {
+          setAccount(acc);
+          await registerEncryptionKey(acc);
+        }
       } catch (error) {
         if (onError)
           onError(
