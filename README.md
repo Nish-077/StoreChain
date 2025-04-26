@@ -68,6 +68,7 @@ StoreChain lets you:
 After installing the MetaMask browser extension, you need to add the Polygon Amoy testnet as a custom network:
 
 - **Network Name:** Polygon Amoy Testnet (or whatever suggestion appears)
+- **Our RPC URL:** https://polygon-amoy.infura.io/v3/4f114a840c5c446486b5913e349f39ef (to use our test network)
 - **New RPC URL:** https://polygon-amoy.infura.io/v3/YOUR_INFURA_PROJECT_ID
 - **Chain ID:** 80002
 - **Currency Symbol:** POL or MATIC (we used POL )
