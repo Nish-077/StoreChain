@@ -15,6 +15,16 @@ async function main() {
   );
   await accessControl.waitForDeployment();
   console.log("AccessControl deployed to:", await accessControl.getAddress());
+
+  const EncryptionKeyRegistry = await ethers.getContractFactory(
+    "EncryptionKeyRegistry"
+  );
+  const encryptionKeyRegistry = await EncryptionKeyRegistry.deploy();
+  await encryptionKeyRegistry.waitForDeployment();
+  console.log(
+    "EncryptionKeyRegistry deployed to:",
+    await encryptionKeyRegistry.getAddress()
+  );
 }
 
 main().catch((error) => {
