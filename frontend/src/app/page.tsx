@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import FileUpload from "../components/FileUpload";
+import { useState, useRef } from "react";
 import UploadedFilesList from "../components/UploadedFilesList";
+import FileUpload from "../components/FileUpload";
 import ConnectWallet from "../components/ConnectWallet";
+import AccessibleFilesList from "@/components/AccessibleFilesList";
 
 export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const uploadedFilesRef = useRef<{ refreshFiles: () => void }>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -18,7 +20,8 @@ export default function HomePage() {
             StoreChain
           </h1>
           <p className="text-lg md:text-xl text-purple-800 opacity-90">
-            Secure, immutable, decentralized file storage on IPFS and Blockchain
+            Secure, immutable, decentralized file storage on IPFS with
+            blockchain-based access and ownership management.
           </p>
         </div>
 
@@ -53,18 +56,38 @@ export default function HomePage() {
 
         {/* Main Card with Glass Effect */}
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-purple-100/50">
-          <FileUpload onSuccess={setSuccess} onError={setError} />
-          <UploadedFilesList />
+          <FileUpload
+            onSuccess={(msg) => {
+              setSuccess(msg);
+              uploadedFilesRef.current?.refreshFiles();
+            }}
+            onError={setError}
+          />
+          <UploadedFilesList
+            ref={uploadedFilesRef}
+            onSuccess={setSuccess}
+            onError={setError}
+          />
+          <AccessibleFilesList onSuccess={setSuccess} onError={setError} />
         </div>
 
         {/* Footer with Links */}
         <div className="mt-8 text-center text-purple-600 text-sm">
-          <p className="mb-2">Powered by Pinata IPFS & Polygon Blockchain</p>
+          <p className="mb-2">
+            Powered by Pinata IPFS & Polygon Amoy Blockchain
+          </p>
           <div className="flex justify-center gap-4">
-            <a href="#" className="hover:text-purple-800 transition-colors">
+            <a
+              href="/about"
+              className="hover:text-purple-800 transition-colors"
+            >
               About
             </a>
-            <a href="#" className="hover:text-purple-800 transition-colors">
+            <a
+              href="https://github.com/Nish-077/StoreChain"
+              className="hover:text-purple-800 transition-colors"
+              target="_blank"
+            >
               GitHub
             </a>
           </div>
