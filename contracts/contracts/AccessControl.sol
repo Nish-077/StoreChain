@@ -18,6 +18,13 @@ contract AccessControl {
     mapping(address => mapping(string => mapping(address => bytes)))
         private encryptedKeys;
 
+    // NEW: accessor => list of (owner, cid) pairs they have access to
+    struct FileAccess {
+        address owner;
+        string cid;
+    }
+    mapping(address => FileAccess[]) private accessibleFiles;
+
     IStorageRegistry public storageRegistry;
 
     event AccessGranted(
@@ -58,32 +65,13 @@ contract AccessControl {
         return false;
     }
 
-    /// @notice Grant access to a file CID to another address
-    /// @param cid The file's IPFS CID
-    /// @param accessor The address to grant access to
-    function grantAccess(string calldata cid, address accessor) external {
-        require(accessor != address(0), "Invalid accessor");
-        require(
-            !_isInAccessorsList(msg.sender, cid, accessor),
-            "Accessor already in list"
-        );
-        require(
-            !accessPermissions[msg.sender][cid][accessor],
-            "Already granted"
-        );
-        require(_cidExists(msg.sender, cid), "CID does not exist for owner");
-
-        accessPermissions[msg.sender][cid][accessor] = true;
-        accessorsList[msg.sender][cid].push(accessor);
-        emit AccessGranted(msg.sender, cid, accessor);
-    }
-
-    /// @notice Grant access and set encrypted key for accessor
+    /// @notice Grant access to a file CID to another address and set encrypted key for accessor
     function grantAccessWithKey(
         string calldata cid,
         address accessor,
         bytes calldata encryptedKey
     ) external {
+        require(accessor != msg.sender, "Cannot grant access to self");
         require(accessor != address(0), "Invalid accessor");
         require(
             !_isInAccessorsList(msg.sender, cid, accessor),
@@ -99,23 +87,23 @@ contract AccessControl {
         accessPermissions[msg.sender][cid][accessor] = true;
         accessorsList[msg.sender][cid].push(accessor);
         encryptedKeys[msg.sender][cid][accessor] = encryptedKey;
+
+        // Add to accessor's accessibleFiles
+        accessibleFiles[accessor].push(FileAccess(msg.sender, cid));
+
         emit AccessGranted(msg.sender, cid, accessor);
         emit EncryptedKeySet(msg.sender, cid, accessor);
     }
 
-    /// @notice Set or update encrypted key for an accessor (owner only)
-    function setEncryptedKey(
+    /// @notice Set or update the encrypted key for the owner (self)
+    function setOwnerEncryptedKey(
         string calldata cid,
-        address accessor,
         bytes calldata encryptedKey
     ) external {
-        require(
-            accessPermissions[msg.sender][cid][accessor],
-            "No access granted"
-        );
+        require(_cidExists(msg.sender, cid), "CID does not exist for owner");
         require(encryptedKey.length > 0, "Encrypted key required");
-        encryptedKeys[msg.sender][cid][accessor] = encryptedKey;
-        emit EncryptedKeySet(msg.sender, cid, accessor);
+        encryptedKeys[msg.sender][cid][msg.sender] = encryptedKey;
+        emit EncryptedKeySet(msg.sender, cid, msg.sender);
     }
 
     /// @notice Revoke access and remove encrypted key
@@ -129,6 +117,18 @@ contract AccessControl {
             if (list[i] == accessor) {
                 list[i] = list[list.length - 1];
                 list.pop();
+                break;
+            }
+        }
+        // Remove from accessor's accessibleFiles
+        FileAccess[] storage files = accessibleFiles[accessor];
+        for (uint256 i = 0; i < files.length; i++) {
+            if (
+                files[i].owner == msg.sender &&
+                keccak256(bytes(files[i].cid)) == keccak256(bytes(cid))
+            ) {
+                files[i] = files[files.length - 1];
+                files.pop();
                 break;
             }
         }
@@ -177,5 +177,12 @@ contract AccessControl {
             }
         }
         return false;
+    }
+
+    /// @notice Get all files (owner, cid) the accessor has access to
+    function getAccessibleFiles(
+        address accessor
+    ) external view returns (FileAccess[] memory) {
+        return accessibleFiles[accessor];
     }
 }
