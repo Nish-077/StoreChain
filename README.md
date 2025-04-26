@@ -1,5 +1,7 @@
 # StoreChain
 
+[Live Demo](https://store-chain.vercel.app/)
+
 **StoreChain** is a decentralized application (dApp) for secure, private, and user-controlled file storage and sharing. It combines the power of IPFS for decentralized file storage, client-side encryption for privacy, and blockchain smart contracts for transparent access and ownership management.
 
 ---
@@ -56,7 +58,7 @@ StoreChain lets you:
 ## 🚀 Quick Start
 
 1. Clone this repository.
-2. Follow the setup instructions in [`frontend/README.md`](frontend/README.md) to run the dApp locally.
+2. Visit the deployed app at [https://store-chain.vercel.app/](https://store-chain.vercel.app/) or follow the setup instructions in [`frontend/README.md`](frontend/README.md) to run the dApp locally.
 3. Use the public contracts on Polygon Amoy, or deploy your own (see [`contracts/README.md`](contracts/README.md)).
 
 ---

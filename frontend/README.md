@@ -1,5 +1,7 @@
 # StoreChain Frontend
 
+[Live Demo](https://store-chain.vercel.app/)
+
 This is the **frontend** for [StoreChain](https://github.com/Nish-077/StoreChain), a decentralized file storage and sharing dApp built with [Next.js](https://nextjs.org), [React](https://react.dev), [Tailwind CSS](https://tailwindcss.com), and [shadcn/ui](https://ui.shadcn.com/).
 
 ## Features
