@@ -1,5 +1,9 @@
 import type { Ethereum } from "@metamask/providers";
 
-interface Window {
-  ethereum?: Ethereum; // MetaMask injects the `ethereum` object
+declare global {
+  interface Window {
+    ethereum?: Ethereum; // MetaMask injects the `ethereum` object
+  }
 }
+
+export {};
